@@ -41,16 +41,16 @@ DNetTest: .FORCE
 	
 #Remove extra files
 clean:
-	rm -f $(TARGETS) *.o
+	rm -f $(TARGETS) *.o *~
 
 .PHONY: help
 help: 
 	@echo ' ----------------HELP MENU---------------'
-	@echo ' TERMS'
+	@echo ' TERM - MEANING'
 	@echo ' Net - Just Network'
 	@echo ' DNet - Simulation [Dynamic Network]'
 	@echo ' '
-	@echo ' COMMANDS'
+	@echo ' TASK - COMMAND'
 	@echo ' Compile and Run - NetTestFull and DNetTestFull'
 	@echo ' Compile - NetTest and DNetTest'
 	@echo ' Run - NetTestRun and DNetTestRun'
