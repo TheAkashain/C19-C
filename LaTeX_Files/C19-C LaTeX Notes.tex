@@ -12,7 +12,7 @@
 \usepackage{multicol}
 \usepackage[none]{hyphenat}
 \usepackage{sectsty}
-\usepackage[margin=1.5in]{geometry}
+\usepackage[margin={1.25in, 1in}]{geometry}
 \usepackage{hyperref}
 \usepackage{lipsum}
 \usepackage{fancyhdr}
@@ -20,21 +20,41 @@
 \usepackage[english]{babel}
 \usepackage{float}
 \usepackage[nottoc,notlot,notlof]{tocbibind}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{chngcntr}
+\usepackage{tocloft}
+\usepackage{amsthm}
+\usepackage{xcolor}
+\usepackage{listings}
 
+\newcommand{\DeclareAutoPairedDelimiter}[3]{%
+  \expandafter\DeclarePairedDelimiter\csname Auto\string#1\endcsname{#2}{#3}%
+  \begingroup\edef\x{\endgroup
+    \noexpand\DeclareRobustCommand{\noexpand#1}{%
+      \expandafter\noexpand\csname Auto\string#1\endcsname*}}%
+  \x}
+
+\counterwithin{figure}{section}%Number figure by section
 \newcommand{\di}{\partial} %Partial derivative symbol
 \renewcommand{\indent}{\hspace*{\tindent}} %Allow indent command to work again
+\DeclareAutoPairedDelimiter{\bra}{\langle}{\rvert} %Add bra
+\DeclareAutoPairedDelimiter{\ket}{\lvert}{\rangle} %Add ket
+\DeclareAutoPairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclareAutoPairedDelimiter{\brackets}{\langle}{\rangle} %Add angled brackets
 \newcommand*\circled[1]{\tikz[baseline=(char.base)]{
-    \node[shape=circle,raw,inner sep=2pt] (char) {#1};}} %Circle a number
+    \node[shape=circle,draw,inner sep=2pt] (char) {#1};}} %Circle a number
 \newlength\tindent
 \setlength{\tindent}{\parindent}
 \setlength{\parindent}{0pt} %Kill auto indenting
-\sectionfont{\bfseries\Large}
+\sectionfont{\bfseries\Large\raggedright}
 \numberwithin{equation}{section} %Number equation by section
 \setlength{\abovedisplayskip}{-3pt}
-\setlength{\belowdisplayskip}{0pt} %Remove space before equations/tables/etc
+\setlength{\belowdisplayskip}{-3pt} %Remove space before equations/tables/etc
 \let\oldcenter\center
 \let\oldendcenter\endcenter
 \renewenvironment{center}{\setlength\topsep{-3pt}\oldcenter}{\oldendcenter} %Remove space before center
+% \setcounter{secnumdepth}{0} %Remove section numbering
 
 % Header
 \pagestyle{fancy}
@@ -43,14 +63,13 @@
 \fancyhead[R]{\thepage}
 \renewcommand{\headrulewidth}{2pt}
 \renewcommand{\footrulewidth}{1pt}
-\newcommand{\fancyfootnotetext}[2]{%
+\newcommand{\fancyfootnotetext}[2]{%y
   \fancypagestyle{dingens}{%
     \fancyfoot[LO,RE]{\parbox{12cm}{\footnotemark[#1]\footnotesize #2}}%
   }%
   \thispagestyle{dingens}%
 }
 
-% Environments
 \newenvironment{Figure}
 {\par\medskip\noindent\minipage{\linewidth}}
 {\endminipage\par\medskip}
@@ -58,8 +77,42 @@
 {\par\medskip\noindent\minipage{\linewidth}}
 {\endminipage\par\medskip}
 
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{question}[theorem]{Question}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\renewcommand\qedsymbol{$\blacksquare$}
+
+
+\definecolor{mGreen}{rgb}{0,0.6,0}
+\definecolor{mGray}{rgb}{0.5,0.5,0.5}
+\definecolor{mPurple}{rgb}{0.58,0,0.82}
+\definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
+\lstset{
+    backgroundcolor=\color{backgroundColour},   
+    commentstyle=\color{red},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{mGray},
+    stringstyle=\color{magenta},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    stepnumber=1,
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C
+}
+
 \begin{document}
-\title{SARS-CoV-2 (Novel Coronavirus) Python Notes}
+\title{SARS-CoV-2 (Novel Coronavirus) C Notes}
 \date{\today}
 \author{Geoffrey J. W. Noseworthy\footnote{gnosewo1@unb.ca}, Sanjeev S. Seahra\footnote{sseahra@unb.ca} \\ \\ Department of Mathematics and Statistics, University of New Brunswick \\ Fredericton, NB, Canada, E3B 5A3}
 
@@ -74,791 +127,217 @@
 
 \newpage
 
-\begin{multicols}{2}
-  \section{The Software}
-  \subsection{Introduction}
-  The purpose of this research project is to develop an Agent-Based Model that can simulate disease spread in a community. In particular, this model is ment to specifically simulate said disease spread in the city of Fredericton, New Brunswick, Canada, though other nearby communities may also be simulated. Thus, numbers presented will be using data provided by Statistics Canada or Service New Brunswick, where appropriate. \\
+\begin{multicols*}{2}
+\section{The Software}
+\subsection{Introduction}
 
-  This model will be making use of the NDLib Python library\cite{NDLib}. While many Python libraries for disease simulation are available, including EoN (Epidemics on Networks)\cite{EoN} and Epydemic, both of which have their own boons and banes, NDLib was chosen for its customizability and support for DyNetX, a Python package that allows for the development and study of dynamic networks and systems. As well, NDLib has more development time than other available packages at the time of writing, and has been both quick to learn, and easy to use.
-  
-  \subsection{NDLib}
-  As mentioned above, the advantages of NDLib stem from its customizability and integration with DyNetX. While no tests involving DyNetX have been performed at the time of writing, the aforementioned customizability cannot be ignored. Like many other packages available, NDLib allows for the creation of custom (otherwise known as ``composite'') disease models on a network (defined using NetworkX). \\
+The purpose of this project is to develop a roughly Agent-Based Model that can simulate COVID-19 disease spread in a community, which, in this case, could represent any city in the provice of New Brunswick, Canada. Previously completed sections of the project worked to do this in the Python programming language, but due to complexity, speed, and inefficiency, all caused by the number of packages required for simply Python implementation, this section of the project will aim to begin anew in the C programming language (and later, the C++ programming language). \\
 
-  Models are defined using 3 primary pieces: the network, the nodes, and the edges. Each of which have their own customizability and options for building the overall model. Each of these will be discussed below:
+All used data is sourced within the code it is used, or when it is first presented in this document (such as population sizes). Numbers shall be obtained through Statistics Canada, Service New Brunswick, or any other provincial statistical branches. \\
 
-  \subsubsection{The Network}
-  The network used by NDLib is defined in similar ways to other similar packages, through the use of NetworkX. NetworkX, which will not be discussed in detail, allows for defining custom or pre-made networks, particularily for the uses of network analysis or graph theory. The networks of which we are primarily concerned with are the ``Barabasi-Albert''\cite{BANet} network and then ``Erdos-Renyi'' network\cite{ERNet}. \\
+This model, unlike the Python implementation, will aim to make use of no packages beyond the generally required ones for C: \lstinline{<stdio.h>, <stdlib.h>, <math.h>, <time.h>, <string.h>.} These libraries are the most standard for C, and are common in many applications due to their implementation of reading and printing to files or the command line, easy access to commands, access to mathematicla functions, access to time functions, and access to more advanced memory manipulation. \\
 
-  The first of these, the Barabasi-Albert network, is a preferential attachment, scale-free network. Thus, this network defines a set number of nodes (N), and attaches them to an average number (n) of other nodes. Some nodes in the network are designated ``important nodes'', and will have a considerably higher number of average connections, with some networks having these important nodes with 10n connections or more. \\
-
-  On the other side, the Erdos-Renyi, a randomly generated network that uses a binomial distribution with a set proability (p) to connect and 2 nodes in the network, which are set at a certain amount (N). Given that the network is purely random, and possible network is equally as likely to occur, with each edge having a fixed probability of being present or absent, which is independent of the other edges. 
-
-  \subsubsection{The Nodes}
-  The nodes in NDLib are defined without many features, but have a series of ``node compartments'' that can be modified. In particular, the statuses that a node could have, such as ``susceptible'' or ``infected'', can be defined early on, and each node is in one of these compartments. Then how the nodes move between these compartments is defined independently, either through random chance, a fixed countdown, etc. \\
-
-  Nodes furthermore can be given their own ``categorical'' attributes. This could include the node's gender, nationality, or any other desired feature. These personal categories act independently of the node compartments above, and can be used to define custom movement between categories for each group. Thus, the likelihood of being infected could be made higher for immuno-compromised or elderly individuals in a disease simulation. Similarly, ``numerical attributes'' exist to do the same thing, but where the category is purely numerical, such as age or height. \\
-
-  Finally, ``Node Thresholds'' are available as well, which may include transition rules between compartments such as ``at least 3 neighbors are infected''. This is primarily useful for opinion networks, and thus has not been explored much further.
-
-  \subsubsection{The Edges}
-  Similar to node attributes, edge attributes allow for the relationship between 2 nodes to be defined. Less detail will be provided here, as it is similar to node attributes, but it allows for the possibility of a connection to be broken temporarily, or only a possibility (such as 5/7 with coworkers) for interacting across the edge on any given day. Like with nodes, ``categorical'' and ``numerical'' attributes are both available, as well as standard, simple probabilities.
-
-  \subsubsection{The Overall Model and Simulation}
-  With the model's pieces defined, what remains is putting it all together. With rules set, attributes included, and networks chosen, what remains is to set a few nodes to infected, and run the simulation. There are 2 primary options for doing this: \\
-  1. Iteration Bunch - One can iterate X number of days through the simulation. If desired, this allows for simulating 5 days, setting the ``time'' to ``weekend'', simulating with these changes, then setting the time back to ``work day''. \\
-  2. Multi-runs - This allows a person to run multiple simulations of the same specifications at the same time. This is based on the cores of one's processor, in which each simulation will take 1 core. This lacks the ``X days, stop, change, continue'' option given above, but makes up for it in the speed of calculation. Due to the nature of parallization in Python, this means one can run 8 simulations simultaneously on a 4-core processor, which take longer individually in this circumstance, but end up taking less time on average per run. Obviously, the lack of customization options for time makes this sub-optimal for many simulations, but for most, this is the best option. \\
-
-  Finally, NDLib has a relatively robust set of support for plotting results. This can be easily modified to how one prefers, given plots tend to be based strongly on personal preference, by edditing the ``Diffusion Viz'' file. With that said, this includes support for mapping the diffusion trend (the total number of cases), the diffusion prevalence (the changes per day), or opinion evolution, which is ignored for this situation. There is also support to map the trends or prevalences of multiple models at the same time. This is all done through MatPlotLib, though Bokh legacy support is available. 
-
-  \subsubsection{Source Code Model Definition}
-  As a further advantage of NDLib, if one is willing to work primarily with the source code of the library, the ability to define purely custom models becomes available. The previous options are all available, but how the iteration command works may also be edited. Thus, it is possible to create a multi-run-compatable model which sets different ``emergency phases'' based on the number of currently infected individuals. This can be done by giving each edge a property that contains the emergency phases during which it can transmit the disease. Then, at the end of each iteration, a global variable can be set to declare the current emergency phase. For more on this, see [2.3]. \\
-
-  Creating models using the source code has 2 major advantages: customizability and speed. As mentioned above, these custom models are essentially limitless in their definition, and can include options that were not easily available with the previously mentioned. Furthermore, there is the fact that Source Code Models run significantly faster than their composite counterparts, which allows for noticeably more complex models to be developed and tested. 
-
-  \subsubsection{Visualization}
-  For visualization of diseases in NDlib, a number of options are given, but there are 2 specifically that are worth mentioning. \\
-
-  1. Diffusion Viz - The diffusion visualization command shows the number of individuals in each compartment at each time step of the simulation on a simple line graph. There is also support for the multiruns command, such that a percentile can be defined (often set to 90), providing an error region based on all of the run simulations. \\
-
-  2. Histogram - This custom designed plot makes use of MatPlotLib's histogram command. It takes in the number of people infected at the last time step of each simulation, and presents them on a histogram plot if they have more than 1 person total infected (more than patient 0). In this case, any simulation where at least 1 other person is infected (at least 1 secondary infection), we will say that it is a simulation with an outbreak.
-
-  \section{Testing}
-  \subsection{SLLAIAIRR}
-  Presented in this section is a new model type defined as the SLLAIAIRR model. This model makes use of more traditional disease definitions, featuring a total of 8 compartments: S - susceptible, L1 - latent 1, L2 - latent 2, A1 - asymptomatic 1, I1 - infected 1, A2 - asymptomatic 2, I2 - infected 2, RA - recovered from asymptomatic, RI - recovered from infected. Note that ``infected'' specifically means the individual was symptomatic. \\
-
-  Transitions in the model are defined in the following table: \\
-  \begin{tabular}{|c|c|}
-    \hline
-    Transition & Probability \\
-    \hline
-    $S \rightarrow L1$ & $1 - (1 - \beta) ^ {(A1+A2)}$ \\
-    $L1 \rightarrow L2$ & $\alpha$ \\
-    $L2 \rightarrow A1$ & $\alpha$\\
-    $A1 \rightarrow A2$ & $\alpha$\\
-    $A1 \rightarrow I1$ & $\phi$\\
-    $A2 \rightarrow RA$ & $\alpha$\\
-    $A2 \rightarrow I2$ & $\phi$\\
-    $I1 \rightarrow I2$ & $\alpha$\\
-    $I2 \rightarrow RI$ & $\alpha$\\
-    \hline
-  \end{tabular}\\ 
-
-  This model was initially designed to study the effect that the rate ``$\phi$'' has on outbreak size. Though, with that said, this model obviously provides for more uses than simply such testing, as will be shown. It should also be noted that, for the purpose of easier understanding, in all tests, the SLLAIAIRR model was written as SEEI(Symp)I(Symp)RR, to follow convention defined by the SEIR model, with any person defined by I being aymptomatic.
-
-  \subsubsection{Preliminary Testing}
-  For early testing of this model, both $\alpha$ and $\beta$ were set to 0.01 (out of a max of 1), corrisponding to a 1\% chance of transition. Then the value for $\phi$ was set to values in the set of [0.01, 0.015, 0.02, 0.025], and a 100 day test was run with 1000 executions each. The population was set to 20,000 for ease of calculation, with an average of 6 connections in a Barabasi-Albert network. Initial infection size was 5 people. Average time required for 8 tests was 14 seconds, leading to an average of 1.75 seconds required per test. The results can be found in Appendix A, section [3.1.1]
-
-  \subsection{SEIR Phase Model}
-  Presented in this section is a new model type defined as the Phase Model, with this particular version being based on the SEIR Model to provide foundations. This model specifically makes use of an emergency phase system, in which the number of active edges (or neighbours) a single node (or person) has is variable based on the number of known infections. In this situation, we assume we know all infections well enough for emergency lockdowns.\\
-
-  Probability of infection and movement between the compartments ($E \rightarrow I$ and $I \rightarrow R$) are defined using a percent-based system, based on $\mathcal{R}_0$ values and provided data, with the movement between compartments using an exponential distribution. On top of this, if X number of infections are discovered and are currently active, a state of emergency is declared, and people stop interacting with so many of their connections. If many more infections are discovered and are currently active, a further, more serious state of emergency is declared, limiting the total number of active connections further. 
-
-  \subsubsection{Patient 0 - Part 1 - BA Model}
-  It should be noted that, for Patient 0 testing, there are 2 different groups that could be defined as ``I'', which shall be clarified here. The initially infected group, which tends to usually be only one person, is defined as ``Infected'', or ``II'' more accurately, and includes a timer for when this group shall become inactive. They are able to induce the $S \rightarrow E$ transition in their neighbors (edge connections), and are not subject to random recovery possibilities. This group cannot be entered, though, as any individual who is exposed can only follow the $E \rightarrow I$ transition. These individuals, which will be defined using ``I'' are known as ``Secondary Infectioned Individuals''. This group is everyone who became infected, but was not initially infected on day 0. \\
-
-  For those wondering why this is the case, NDLib requires the initial infected group to be named ``Infected'', thus it was not possible to avoid this confusion. \\
-  
-  For initial testing of this model, the biggest point of concern was how it compares to the SEIR Model. Given the high amount of use of the SEIR Model to study the effect of some patient 0 on a community, this simulation was returned to for testing. The data necessary is as follows: \\
-  \begin{itemize}
-  \item Total Population: 20,000 
-  \item Total Number of Days: 30
-  \item Number of Executions Per Simulation: 1000
-  \item Initial Number of Infected Individuals: 1
-  \item $\mathcal{R}_0$ Value: 3.1
-  \item Half-Life of Days in Exposed: 11
-  \item Half-Life of Days in Infectious: 14
-  \item Number of Active Infections For Emergency Phase: 3
-  \item Number of Active Infections For Serious Emergency Phase: 20
-  \item Number of Connections - Phase 1: 10
-  \item Number of Connections - Phase 2: 6
-  \item Number of Connections - Phase 3: 4
-  \end{itemize}
-  
-  With this, presented below is a summary of the overall results. 
-  
-\end{multicols}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 2/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 2/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 2/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 2/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 2/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\begin{multicols}{2}
-  \subsubsection{Patient 0 - Part 2 - BA Model}
-  \label{Phase Model: Patient 0 - Part 2}
-  As has been common with previous models, the above tests were repeated with the main difference being the half-lifes. It should also be noted that in previous tests it was assumed that ``half-life = average length''.  This was changed based on the idea that ``Average Length = $(half-life)/(\log(2))$''. Thus, the updated half-lifes (and other values) are: \\
-  \begin{itemize}
-  \item Half-Life of Days in Exposed: 4.3
-  \item Half-Life of Days in Infectious: 5.8
-  \item Number of Connections - Phase 1: 12
-  \end{itemize}
-\end{multicols}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 3/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 3/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 3/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 3/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 3/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\begin{multicols}{2}
-  \subsubsection{Patient 0 - Part 3 - Custom Model}
-  For the third set of major tests of the Phase Model using the Patient 0 testing scheme, a new model, the Custom Model, was used. This is defined in \nameref{Appendix B: Custom Model}. Beyond this, the parameters for the simulation remain exactly the same as above in \nameref{Phase Model: Patient 0 - Part 2}. For ease of referencing, they are also shown below:
-  \begin{itemize}
-  \item Total Population: 20,000 
-  \item Total Number of Days: 30
-  \item Number of Executions Per Simulation: 1000
-  \item Initial Number of Infected Individuals: 1
-  \item $\mathcal{R}_0$ Value: 3.1
-  \item Half-Life of Days in Exposed: 4.3
-  \item Half-Life of Days in Infectious: 5.8
-  \item Number of Active Infections For Emergency Phase: 6
-  \item Number of Active Infections For Serious Emergency Phase: 20
-  \item Number of Connections - Phase 1: 12
-  \item Number of Connections - Phase 2: 6
-  \item Number of Connections - Phase 3: 4
-  \end{itemize}
-\end{multicols}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 4/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 4/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 4/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 4/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 4/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\begin{multicols}{2}
-  \subsubsection{Patient 0 - Part 3 - WS Model}
-  As above, another set of tests using the same Patient 0 Phase Model testing scheme were done, with these on a new model, the Watts-Strogatz Model. This is defined in \nameref{Appendix B: Watts-Strogatz}. Beyond this, though, all parameters are the same as above. A summary of the results is presented below.
-\end{multicols}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 5/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 5/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 5/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 5/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../P0-Phase Model Tests 5/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\subsection{Patient 0 - Summary and Higher Population Tests}
-For all higher population tests, please see Appendix C, where summaries for populations of 50k and 150k people are provided. \\
-
-Furthermore, for a summary of the above experiments, see the below figures:
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../Summary/Histogram_Data_0_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using a histogram format for readability.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../Summary/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../Summary/Probability_Data_0_Index.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\begin{multicols}{2}
-  \subsection{ASPT Model}
-  Following the testing of the SEIR Phase Model, a newer type of model was developed, known as the ASPT Model, AKA the Age, Symptoms, Phases, and Testing Model. This model is designed to incorperate the phase element of the previous model, while adding in asymptomatic cases, contact tracing, general testing, random testing, pre-symptomatic phases, ages, and a significantly quicker infection algorithm. \\
-  
-  For this model, emergency phases are defined by the number of cases which are both active and tested, resulting in a much higher general probability of spread compared to the SEIR Phase Model, while testing is designed to work to counteract this effect. As well, probability of infection and movement between the compartments ($E \rightarrow I$ and $I \rightarrow R$) are defined using a percent-based system, based on $\mathcal{R}_0$ values and provided data, with the movement between compartments using an exponential distribution. \\
-
-  Furthermore, for these tests, it is assumed that, when coming into contact with an infectious person, younger individuals are half as likely to become infected, while older individuals are twice as likely. The available compartments, as well as infectability, are defined below:
-  
-  \begin{tabular}{|c|c|c|}
-    \hline
-    Compartment & Symbol &  Infectability \\
-    \hline
-    Susceptible & $S$ & 0 \\
-    Exposed (Latent) & $E$ & 0 \\
-    Pre-Symptomatic & $Pre-S$ & $\frac{1}{X}$ \\
-    Symptomatic & $Sy$ & 1 \\
-    Asymptomatic & $Asy$ & $\frac{1}{X}$ \\
-    Removed & $R$ & 0 \\
-    Tested & $T$ & 0 \\
-    Tested Removed & $TR$ & 0 \\
-    \hline
-  \end{tabular}
-
-  Furthermore, the possible transitons, and their probailities, are defined below:
-
-  \begin{tabular}{|c|c|}
-    \hline
-    Transition & Probability \\
-    \hline
-    $S \rightarrow E$ & Infection ($\mathcal{R}_0$) \\
-    $E \rightarrow Pre-S$ & $\alpha$ \\
-    $Pre-S \rightarrow Sy$ & 100\% - (Asymp-chance) after X days \\
-    $Pre-S \rightarrow Asy$ & (Asymp-chance) after X days \\
-    $Sy \rightarrow R$ & $\gamma$ \\
-    $Asy \rightarrow R$ & $\gamma$\\
-    $Pre-S \rightarrow T$ & Random\_test/population \\
-    $Asy \rightarrow T$ & Random\_test/population\\
-    $Sy \rightarrow T$ & $Symp-test$ \& Random\_test/population \\
-    $T \rightarrow RT$ & $\gamma$ \\
-    \hline
-  \end{tabular}
-\end{multicols}
-  With this defined, results are presented below.
-
-\subsubsection{Patient 0 - Age-Based Custom Network Test 1}
-As with previous models, early testing is done using the Patient 0 simulation. In this case, the necessary information and the results are below: \\
+\subsection{The Code}
+The code is organized into 4 sections:
 \begin{itemize}
-\item Total Population: 20,000 
-\item Total Number of Days: 30
-\item Number of Executions Per Simulation: 1000
-\item Initial Number of Infected Individuals: 1
-\item $\mathcal{R}_0$ Value: 3.1
-\item Half-Life of Days in Exposed: 11
-\item Half-Life of Days in Infectious: 14
-\item Number of Active Infections For Emergency Phase: 6
-\item Number of Active Infections For Serious Emergency Phase: 20
-\item Number of Connections - Phase 1: 12
-\item Number of Connections - Phase 2: 6
-\item Number of Connections - Phase 3: 4
-\item Asymptomatic Chance: 20\%
-\item Asymptomatic and Pre-Symptomatic Infect Chance: $\frac{1}{3}$
-\item Symptomatic Test Chance Per Day: 10\%
-\item Random Tests Per Day: 20
-\item Days Before Testing Neighbors of Confirmed Case: 2
-\item Pre-Sypmtomatic Time: 2 Days
+\item Network Generation (\lstinline{NetworkGen.c})
+\item Dynamic Network Simulation (\lstinline{DNet.c})
+\item Driver Programs (\lstinline{NetworkTest.c, DNetTest.c})
+\item Control (\lstinline{makefile})
 \end{itemize}
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../ASPT Model Tests 1/Histogram_Data_0_Index.png}
-  \caption{A plot of the mean number of infections, tests, and active infections at day 30, all based on the day that patient 0 is quarantined.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../ASPT Model Tests 1/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections, tests, and active infections at day 30, all based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../ASPT Model Tests 1/Probability_Data_0_Index.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak), at least 1 test, and at least 1 active case at day 30, based on the day patient 0 is quarantined.}
-\end{figure}
-
-\subsubsection{Patient 0 - Age-Based Custom Network Test 2}
-Continuing from the previous tests, a change was made to the number of days before testing the edge-neighbors of a confirmed case, which was originally set to 2. In this set, the number of days was set to 4, which gives the data below. In general, the consensus at the end was that, based on these 15000 tests, it is a better decision to test all connections within 2 days of confirming someone as infected, though the difference seems to be minor.
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../ASPT Model Tests 3/Histogram_Data_0_Index.png}
-  \caption{A plot of the mean number of infections, tests, and active infections at day 30, all based on the day that patient 0 is quarantined.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../ASPT Model Tests 3/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections, tests, and active infections at day 30, all based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../ASPT Model Tests 3/Probability_Data_0_Index.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak), at least 1 test, and at least 1 active case at day 30, based on the day patient 0 is quarantined.}
-\end{figure}
-
-\subsubsection{Patient 0 - Testing Probability Simulation}
-In this set of tests, we once again adopt the setup of Patient 0 - Age-Based Custom Network Test 1, which involved only 2 days before testing confirmed cases. In this situation, we will set a fixed chance of a test returning a positive when a person is infected, which will be in the following range: [10\%, 100\%], in increments of 10. The usual table is presented below, with the results following:\\
-\begin{itemize}
-\item Total Population: 20,000 
-\item Total Number of Days: 30
-\item Number of Executions Per Simulation: 1000
-\item Initial Number of Infected Individuals: 1
-\item $\mathcal{R}_0$ Value: 3.1
-\item Half-Life of Days in Exposed: 11
-\item Half-Life of Days in Infectious: 14
-\item Number of Active Infections For Emergency Phase: 6
-\item Number of Active Infections For Serious Emergency Phase: 20
-\item Number of Connections - Phase 1: 12
-\item Number of Connections - Phase 2: 6
-\item Number of Connections - Phase 3: 4
-\item Asymptomatic Chance: 20\%
-\item Asymptomatic and Pre-Symptomatic Infect Chance: $\frac{1}{3}$
-\item Symptomatic Test Chance Per Day: 10\%
-\item Random Tests Per Day: 20
-\item Days Before Testing Neighbors of Confirmed Case: 2
-\item Pre-Sypmtomatic Time: 2 Days
-\end{itemize}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../ASPT Model Tests 4/Histogram_Data_0_Index.png}
-  \caption{A plot of the mean number of infections, tests, and active infections at day 30, all based on the day that patient 0 is quarantined.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../ASPT Model Tests 4/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections, tests, and active infections at day 30, all based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = \textwidth]{../ASPT Model Tests 4/Probability_Data_0_Index.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak), at least 1 test, and at least 1 active case at day 30, based on the day patient 0 is quarantined.}
-\end{figure}
-
-
-\newpage
-\section{Appendix A: Individual Simulation Results}
-\subsection{SLLAIAIRR}
-\subsubsection{Preliminary Testing}
-\begin{figure}[H]
-  \centering
-  \begin{minipage}{0.45\textwidth}
-    \centering
-    \includegraphics[width=0.9\textwidth]{../SLLAIAIR Results/(COUNT)Patient 0 Test: 20000 People, 6 Connections, 100 Days Total, 5 Initial, 01 Phi.png} % first figure itself
-    \caption{Diffusion trend of the population after 100 days with $\phi = 0.01$.}
-  \end{minipage}\hfill
-  \begin{minipage}{0.45\textwidth}
-    \centering
-    \includegraphics[width=0.9\textwidth]{../SLLAIAIR Results/(HIST)Patient 0 Test: 20000 People, 6 Connections,100 Days Total, 5 Initial, 01 Phi.png} % second figure itself
-    \caption{Histogram of the population after 100 days with $\phi = 0.01$.}
-  \end{minipage}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \begin{minipage}{0.45\textwidth}
-    \centering
-    \includegraphics[width=0.9\textwidth]{../SLLAIAIR Results/(COUNT)Patient 0 Test: 20000 People, 6 Connections, 100 Days Total, 5 Initial, 015 Phi.png} % first figure itself
-    \caption{Diffusion trend of the population after 100 days with $\phi = 0.015$.}
-  \end{minipage}\hfill
-  \begin{minipage}{0.45\textwidth}
-    \centering
-    \includegraphics[width=0.9\textwidth]{../SLLAIAIR Results/(HIST)Patient 0 Test: 20000 People, 6 Connections,100 Days Total, 5 Initial, 015 Phi.png} % second figure itself
-    \caption{Histogram of the population after 100 days with $\phi = 0.015$.}
-  \end{minipage}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \begin{minipage}{0.45\textwidth}
-    \centering
-    \includegraphics[width=0.9\textwidth]{../SLLAIAIR Results/(COUNT)Patient 0 Test: 20000 People, 6 Connections, 100 Days Total, 5 Initial, 02 Phi.png} % first figure itself
-    \caption{Diffusion trend of the population after 100 days with $\phi = 0.02$.}
-  \end{minipage}\hfill
-  \begin{minipage}{0.45\textwidth}
-    \centering
-    \includegraphics[width=0.9\textwidth]{../SLLAIAIR Results/(HIST)Patient 0 Test: 20000 People, 6 Connections,100 Days Total, 5 Initial, 02 Phi.png} % second figure itself
-    \caption{Histogram of the population after 100 days with $\phi = 0.02$.}
-  \end{minipage}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \begin{minipage}{0.45\textwidth}
-    \centering
-    \includegraphics[width=0.9\textwidth]{../SLLAIAIR Results/(COUNT)Patient 0 Test: 20000 People, 6 Connections, 100 Days Total, 5 Initial, 025 Phi.png} % first figure itself
-    \caption{Diffusion trend of the population after 100 days with $\phi = 0.025$.}
-  \end{minipage}\hfill
-  \begin{minipage}{0.45\textwidth}
-    \centering
-    \includegraphics[width=0.9\textwidth]{../SLLAIAIR Results/(HIST)Patient 0 Test: 20000 People, 6 Connections,100 Days Total, 5 Initial, 025 Phi.png} % second figure itself
-    \caption{Histogram of the population after 100 days with $\phi = 0.025$.}
-  \end{minipage}
-\end{figure}
-
-\newpage
-\section{Appendix B: A Log of Network Options}
-\begin{multicols}{2}
-  As may be important to some readers, this section has been created to log interesting social networks that have been discovered or developped, and to provide some base level descriptions of each. \\
-
-  \subsection{Barabasi-Albert Model}
-  The Barabasi-Albert model\cite{BANet} generates a random, scale-free network using a preferential attachment mechanism. This means that the network is created as one would expect for any random network (where the average degree is chosen from the offset), and then a small subset of nodes are chosen as ``hubs''. These ``hubs'' have many more connections than the average, sitting at up to 10x more, though how much more is also random. \\
-
-  Many networks, such as the internet, citation networks, and some social networks, are thought to behave this way. A real life example would be a large business, in which the leader of any region may have many subsidiary locations in which this leader only interacts with the individual supervisors, but each supervisor is a hub for all employees, which may number near 50, or even 100. \\
-
-  Another example would be the internet, in which a single server, or set of servers (such as a website), act as the hub or set of hubs for all users, which could easily number above 10,000. 
-
-  \subsection{Erdos-Renyi Model}
-  The Erdos-Renyi Model\cite{ERNet} is a random, probabilistic model in which all possible configurations are equally as likely. It is defined by creating a set number of nodes, and then the chance of an edge forming between any 2 nodes is a defined by a binomial distribution. The probability of each type of graph is defined by the following formula:
-  \[
-    p^M (1-p)^{{n \choose 2} - M}
-  \]
-
-  Where p is the probability of an edge being formed, and M is the number of edges. Thus, if one desires an average number of $x$ edges per node, then that can be done with $p = \frac{x}{n-1}$, where n is the total number of nodes. \\
-
-  This network has the disadvantage that is lacks clustering, which is featured in the above Barabasi-Albert model, and in the ``Watts and Strogatz model'', which has yet to be explored. But, due to this exact nature, when modeling purely random phenomena (such as a protest), it is the best choice currently known.
-
-  \subsection{Watts-Strogatz Model}
-  \label{Appendix B: Watts-Strogatz}
-  The Watts-Strogatz model, otherwise known as the small-world network\cite{WSNet}, is a semi-random, non-scale-free model designed to emulate the small-world phenomenon. This phenomenon, for the purposes of this paper, is defined as ``the ability for any 2 people to be connected by a total of 6 social connections on average.''\cite{small-world} \\
-
-  The Watts-Strogatz model works by taking 3 inputs: the number of nodes (N), the average number of edges per node (k), and a rewiring proability (p). As one can see, the first two inputs - N and k - are the same as in the Barabasi-Albert Model, and are similar to the Erdos-Renyi Model. The third input, p, is unique in that the network first creates a large ring of all N nodes, and connects each node to its k nearest neighbors. Then, based on the probability p, each edge is broken and connected to a new, random node. This, a value of $p=0$ would return a highly ordered network, and a value of $p=1$ would return an entirely random network. \\
-
-  From previous studies,\cite{data-driven WS}\cite{beyond semicircle} it has been suggested that the Watts-Strogatz Model is an accurate estimate of many real-world social networks. Based on the paper ``Complex networks: Structure and dynamics''\cite{CN SD}, we find that, when given a value of p that is close to 0, but not equal to 0, the ``small-world'' property emerges, while maintaining the high degree of clustering that one would expect in a real-world network. Based on a number of papers\cite{WSNet}\cite{beyond semicircle}, the value $p=0.01$ was decided to produce the desired effect. 
-
-  \subsection{Custom Model}
-  \label{Appendix B: Custom Model}
-  The ``Custom Model'' is a simple, household-based model developed to test more accurate methods for simulating networks. While the Barabasi-Albert model features a preferential attachment mechanism, and Erdos-Renyi creates an equally likely environment for all networks, the Custom Model works somewhere in the middle. \\
-
-  The first step of the Custom Model is to designate households. It is assumed that the average number of connections for a person, without any form of quarantining, is 12, and that the average household size in New Brunswick, Canada is 2.3 people per household.\cite{NBHouseSize} Thus, a random normal variable is calculated based on a mean of 2.3 and a standard deviation of 0.5 (a random reasonable StDev), and rounded to the nearest integer greater than or equal to 1 and less than or equal to 5. Then, that many people are chosen and are connected to each other to form a household. \\
-
-  Following this, taking another random variable of mean 9.7 (12 - 2.3) and standard deviation 2 (another random reasonable number), businesses are defined using the same process of selecting random people and assigning them. These people are also all connected to each other. \\
-
-  As one can guess, this network is imperfect due to a lack of random connections and a lack of preferential nodes, but it provides an appropriate contast to the relatively extreme Barabasi-Albert model, and has clear room for improvement.
-
-  \subsection{Age-Based Custom Model}
-  \label{Appendix B: AB Custom Model}
-  The Age-Based Custom Model is an extension of the previous Custom Model. The major difference in this model is that it incorperates an age statistic, based on results from real-life data (often provided by Statistics Canada). With these statistics, a number of people are assigned to long-term care facilities, with another number working as employees in these high-density sub-networks. As well, all children are assigned to be attending school for this network. \\
-
-  Based on data, which includes class sizes, care-workers per facility, people per care facility, average number of seniors working, etc, approximate recreations of these real-life institutions are created in which all people in a class or care facility are connected together in a local 'hub'. Beyond this, general improvements were made to the generation of households and businesses when compared with the previous custom model, allowing it to run significantly quicker than before. The number of people in a business was also upgraded to a mean 11.7, reflecting that, for a person to have 12 connections, we cannot include themself in the home and workplace, and another error that prevented an appropriate number of connections.
-
-\end{multicols}
-
-\newpage
-
-\section{Appendix C: SEIR Phase Model - Large Population Tests}
-Following the tests presented in section 2.2, titled ``SEIR Phase Model'', data is provided for tests done at higher population numbers. The parameters are shown below:
-\begin{itemize}
-\item Total Population: [Variable]
-\item Total Number of Days: 30
-\item Number of Executions Per Simulation: 1000
-\item Initial Number of Infected Individuals: 1
-\item $\mathcal{R}_0$ Value: 3.1
-\item Half-Life of Days in Exposed: 4.3
-\item Half-Life of Days in Infectious: 5.8
-\item Number of Active Infections For Emergency Phase: 6
-\item Number of Active Infections For Serious Emergency Phase: 20
-\item Number of Connections - Phase 1: 12
-\item Number of Connections - Phase 2: 6
-\item Number of Connections - Phase 3: 4
-\end{itemize}
-\subsection{Custom Model - 50k People}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_Custom/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_Custom/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_Custom/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_Custom/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_Custom/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\subsection{Custom Model - 150k People}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_Custom/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_Custom/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_Custom/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_Custom/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_Custom/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\subsection{Watts-Strogatz - 50k People}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_WS/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_WS/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_WS/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_WS/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_WS/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\subsection{Watts-Strogatz - 150k People}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_WS/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_WS/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_WS/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_WS/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_WS/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\subsection{Barabasi-Albert - 50k People}
-It should be noted that these calculations were limited due to computational ability, both on an offshore and local server. Therefore, results are only presented for days 0, 3, 7, and 14 indexed at 0, or 1, 4, 8, 15 indexed at 1.
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_BA/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_BA/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_BA/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_BA/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_50_BA/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\subsection{Barabasi-Albert - 150k People}
-It should be noted that these calculations were limited due to computational ability, both on an offshore and local server. Therefore, results are only presented for days 0, 3, 7, and 14 indexed at 0, or 1, 4, 8, 15 indexed at 1.
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_BA/Mean_Data_1_Index.png}
-  \caption{A plot of the mean number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_BA/Mean_Data_1_Index_Median.png}
-  \caption{A plot of the median number of infections based on the day that patient 0 is quarantined, using the IQR for error bars.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_BA/Violin_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a violin format. (Indexed at 0)}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_BA/Jitter_Data_0_Index.png}
-  \caption{A plot of the overall data, presented in a jitter format. (Indexed at 0).}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width = 0.60\textwidth]{../50k_150k_tests/Results_150_BA/Outbreak_Probability.png}
-  \caption{A plot of the probability of at least 1 secondary infection (outbreak) based on the day patient 0 is quarantined.}
-\end{figure}
-
-\newpage
-
-\begin{thebibliography}{9}
-\bibitem{NDLib}
-  Rossetti, G., Milli, L., Rinzivillo, S. et al. \textit{``NDlib: a python library to model and analyze diffusion processes over complex networks.''} Int J Data Sci Anal 5, 61–79 (2018).
-  \\\texttt{https://doi.org/10.1007/s41060-017-0086-6}
-
-\bibitem{EoN}
-  J. Miller and T. Ting. \textit{``EoN (Epidemics on networks): A fast, flexible pythonpackage for simulation, analytic approximation, and analysis of epidemics onnetworks.''} Journal of Open Source Software, 4(44):1731, 2019.
-
-\bibitem{BANet}
-  Albert, Réka; Barabási, Albert-László (2002). \textit{``Statistical mechanics of complex networks.''} Reviews of Modern Physics. 74 (1): 47–97. 
-
-\bibitem{ERNet}
-  Erdös, P. \& Rényi, A. (1959). \textit{``On Random Graphs I.''} Publicationes Mathematicae Debrecen, 6, 290.
-
-\bibitem{NBHouseSize}
-  Statistics Canada. 2017. \textit{``New Brunswick [Province] and Canada [Country] (table). Census Profile. 2016 Census. Statistics Canada Catalogue no. 98-316-X2016001.''} Ottawa. Released November 29, 2017.
-  \\\texttt{https://www12.statcan.gc.ca/census-recensement/2016/dp-pd/prof/} (accessed July 7, 2020).
-
-\bibitem{WSNet}
-  Watts, D., Strogatz, S. \textit{``Collective dynamics of ‘small-world’ networks.''} Nature 393, 440–442 (1998).
-  \\\texttt{https://doi-org.proxy.hil.unb.ca/10.1038/30918}
-
-\bibitem{small-world}
-  Milgram, Stanley (May 1967). \textit{``The Small World Problem.''} Psychology Today. Ziff-Davis Publishing Company.
-  \\\texttt{https://www.jstor.org/stable/2786545}
-
-\bibitem{CN SD}
-  S. Boccaletti, V. Latora, Y. Moreno, M. Chavez, D.-U. Hwang, \textit{``Complex networks: Structure and dynamics,''} Physics Reports, Volume 424, Issues 4–5, 2006, Pages 175-308, ISSN 0370-1573
-  \\\texttt{https://doi.org/10.1016/j.physrep.2005.10.009}
-
-\bibitem{beyond semicircle}
-  Illés J. Farkas, Imre Derényi, Albert-László Barabási, and Tamás Vicsek \textit{``Spectra of 'real-world' graphs: Beyond the semicircle law''} Phys. Rev. E 64, 026704 – Published 20 July 2001
-  \\\texttt{https://doi.org/10.1103/PhysRevE.64.026704}
-
-\bibitem{data-driven WS}
-  Ling Xue, Shuanglin Jing, Joel C. Miller, Wei Sun, Huafeng Li, José Guillermo Estrada-Franco, James M. Hyman, Huaiping Zhu, \textit{``A data-driven network model for the emerging COVID-19 epidemics in Wuhan, Toronto and Italy,''} Mathematical Biosciences, Volume 326, 2020, 108391, ISSN 0025-5564
-  \\\texttt{https://doi.org/10.1016/j.mbs.2020.108391.}
-  
-\end{thebibliography}
-
+Each of these files will be discussed in turn, so that their purpose is understood.
+
+\subsubsection{Network Generation}
+The Network Generation code is, by far, the most complicated code of this document, and will be the most difficult to understand. A simple list of the functions located within this code can be found in \lstinline{NetworkGeneration.h}. \\
+
+To begin, this file is the one that defines what a person is within our simulation. It includes the necessary data for our purposes, such as their age, their number of connections, a simple counter for general use, a list of indexes to other people that they are connected to, and a list of what ``types'' of connections they have with those people. This is shown below:
+\begin{lstlisting}
+typedef struct person {
+  int age;
+  int cCount;
+  int status;
+  int counter;
+  int connections[MAX_C];
+  int con_type[MAX_C];
+} Person, *pPerson;
+\end{lstlisting}
+
+Following this, we have a number of programs designed to create a person or a network of people (or to copy them) and to put them into the heap memory for future access. These functions feature general memory management (\lstinline{Malloc} and \lstinline{Calloc}), as well as measures to ensure efficiency. For one looking to simply understand the network generation, these simply give us a framework of the network itself.
+\begin{lstlisting}
+pPerson mallocPerson();
+void copyPerson(pPerson dest,
+        pPerson src);
+pPerson* mallocNetwork(int size);
+pPerson* createNetwork(int size);
+void copyNetwork(pPerson* dest,
+        pPerson* source, int size);
+pPerson* createCopy(pPerson* src,
+            int size);
+\end{lstlisting}
+
+Following this, we have the first of the important code sections. The first in this section in the fprintPerson command, which is a function to print out a person in an ``index - age - connection number - connections with type'' format. The network version simply does that for every single person. Both of these functions take file inputs, so, if you do not wish to print to a file and rather prefer the command line, then you simply must input ``stdout'' as the file name.
+\begin{lstlisting}
+void printNetwork(pPerson* network,
+          int size, String fileName);
+void fprintPerson(pPerson person,
+        FILE *file);
+\end{lstlisting}
+
+Now we have the important functions for the network generation. When creating a robust network, we obviously need to build a set of algorithmically strong connections, ones which make sense in their generation. This is completed through the 5 ``gen*'' functions, where the star represents the rest of the name of the function. Each function, described using its own comment system, takes data from Statistics Canada and other organizations to create an appropriate set of connections for those in (or working in) Long Term Care-Homes, those in standard Households, those in Schools, those going to work, and then a set of friends. \\
+
+For care homes, from this data, we see approximately 69 people per home, with 51 employees throughout the week. This allows us to build carehomes with a connection network of 120 connections, though the number of people within the population to bring about the need for a single care home is quite large, sitting around 11k. \\
+
+For households, we see that the average household size is 2.3, and the age distribution is about 15\% below 18, 65\% between 18 and 65, and 20\% aboce 65. We use these numbers (with a standard deviation of 0.5 in a normal random generator) to generate households for anyone not in a care home, and to assign each person an age. Currently, no protections exist to ensure that a household is not full of children. \\
+
+For schools, we use an average class size of 22 people, with a standard deviation of 5. With this, we simply get that many children, and connect them. \\
+
+For work, this is the exact same as school, except for adults and 20\% of older individuals. Here we use a mean of 9.7, and a standard deviation of 2. \\
+
+Finally, for friends, we simply give every person 2 connections with people not within any other group. \\
+
+Each connection also has an assigned ``type''. As lockdowns begin within our simulation, certain connections are no longer viable. Thus, in phase 0, all connections are allowed. In phase 1, people lose their friend connections, In phase 2, all but household / care home connections are removed.
+\begin{lstlisting}
+void genCareHomes(pPerson *base, int size,
+        int* wNet, int* wP, int* hP);
+void genHouseHolds(pPerson *base,int size,
+        int* hNew, int* hp,int* childlist,
+        int* cpos);
+void genSchools(pPerson *base,
+        int size, int* childlist);
+void genWork(pPerson *base,
+        int size, int* wNet, int* wpos);
+void genFriends(pPerson *base, int size);
+\end{lstlisting}
+
+Next is the section for assistive functions. These swap input values, shuffle arrays, and give us random normal numbers.
+\begin{lstlisting}
+double normalRandom();
+void shuffle(int* array, int size);
+void swap(int* a,int* b);
+\end{lstlisting}
+
+Finally, there are the ``freedom functions''. These take people or networks assigned to memory and free them, so that the memory can be used for something new. They are simple in code, but drastically important.
+\begin{lstlisting}
+void freePerson(pPerson input);
+void freeNetwork(pPerson* input,int size);
+\end{lstlisting}
+
+\subsubsection{Dynamic Network Simulation}
+This next set of code concerns the actual simulation. The list of functions is comparitively small, but the depth of each individual function is more significant, and a number of comments are present to ensure full understanding at all times. \\
+
+To repeat our previous format, we will go through each function one-by-one to explain what each does, but then will add a section in which we give a number of comments for how the code works. The final goal will be to create a simple interface to manage this for the user, but, until then, this must be done through comments and regular checking of formatting. \\
+
+Unlike before, we will begin with the list of commands first.
+\begin{lstlisting}
+void simulate(pPerson* orig, int size,
+        int runs, String file, double data[]);
+
+void day(pPerson* network,
+        int size, double data[]);
+
+void infect(pPerson person, double beta,
+        double rate, int* final);
+
+void test(pPerson person, double beta,
+        int* final);
+
+void fPrintNetworkStatus(pPerson* network,
+        int size, FILE* fPtr);
+\end{lstlisting}
+
+The first of our functions is \lstinline{simulate}. This command takes in a network, its size, a number of simulations, the output file, and a LOT of data. The order of this data is provided in the final section. \\
+
+The purpose of this function in particular is to open the desired file, organize the data appropriately, prepare for simulation, create the loading bar that took way too long to design, then pass this all to the ``day'' command in a loop for however many days are desired within our simulation. It then runs calculations to set an emergency phase, prints out the final results to a file, and prepares for the next simulation. \\
+
+Following this, we have the \lstinline{day} function. This function is effectively the simulation day-by-day. It takes the data, generates 2 random numbers for every single person to ensure that the stochastic nature of the disease is fully realizable, creates an array to hold the changes for each person, and then runs through the disease states for each person appropriately. This is the first time the disease itself shall be mentioned, so it deserves a moment of attention. \\
+
+The COVID-19 part of this simulation is achieved using a significantlly modified SEIR model. Each person has a ``state'', starting in \textbf{susceptible} (having never encountered the disease). If one has an infected connection, their is a percent chance per day that they too become infected. If this happens, that person becomes \textbf{exposed}. An exposed person has a random chance per day to switch to the pre-symptomatic phase, in which a person in infectious, but cannot show symptoms, even if they are ``fated'' to become symptomatic. But, after 2 days are pased, this person may become symptomatic or asymptomatic. A \textbf{symptomatic} person is one who shows symptoms of COVID-19 and is the most infectious of any category. These indivisuals have a high percent chance of infecting their connections, and a random chance to recover or be tested each day. An \textbf{asymptomatic} person in the same, but shows no symptoms, doesn't get randomly tested, and has a lower (1/3) chance of infecting their connections. \\
+
+This is the end of standard statuses, but there are a few others of importance. A person who is \textbf{tested} has been identified as one with COVID-19 by the local medical body. They are quarenteed and, after two days, their connections are tested as well to see if they have COVID-19. A \textbf{removed} individual has healed from the disease and is no longer active, while a \textbf{tested removed} invidual has also been removed, but their connections may be soon tested. \\
+
+With this completed, we can now discuss \lstinline{infect} and \lstinline{test}. These commands are the ones where an infectious person has a random chance of infecting their neighbours (based on who they can contact in the current emergency phase, see the Network Generation section for that), or where a tested individual's neighbours are tested because they were. \\
+
+Finally, there is \lstinline{fPrintNetworkStatus}, which prints the number of people in each of the above categories, and then the number NOT susceptible at the end of the simulation. This is saved in a CSV friendly format for quick data analysis. \\
+
+With this completed, we now have the comments. There are a number of things that one must know when using these files, and the easiest way to express this is through the comment code:
+\begin{lstlisting}
+/*
+  List of Disease Statuses:
+  0 - Susceptible
+  1 - Exposed
+  2 - Pre-symptomatic
+  3 - Symptomatic
+  4 - Asymptomatic
+  5 - Removed
+  6 - Tested
+  7 - Tested Removed
+*/
+
+/*
+  Connection Types:
+  0 - Yellow, Orange, or Red Phase
+  1 - Yellow or Orange Phase
+  2 - Only Yellow Phase
+ */
+
+/*
+  State Types:
+  0 - Yellow
+  1 - Orange 
+  2 - Red
+ */
+
+/* DATA ORDER - HIGHLY IMPORTANT
+   0 - Days
+   1 - Beta (Infection Chance)
+   2 - Alpha (Exposed to
+              Pre-Symptomatic Chance)
+   3 - Gamma (Recovery Chance)
+   4 - Asymptomatic Chance
+   5 - Asymptomatic Infection Rate
+   6 - Symptomatic (Voluntary) Test
+       Chance
+   7 - Random Test Chance
+   8 - Test Success Chance
+   9 - Pre-symp Time (Days)
+   10 - Border Crossings Per Day
+   11 - Importation Infection Chance
+   12 - Starting Phase
+        (0 = yellow,
+         1 = orange,
+         2 = red)
+   13 - Orange Case Threshold
+   14 - Red Case Threshold 
+   15 - Travel Isolation Time
+        (0 = full house,
+         1 = just travel,
+         2 = none)
+   16 - Average Travel Time
+*/
+\end{lstlisting}
+
+\subsubsection{Drivers}
+
+\subsubsection{Makefile}
+For our final file, we have the Make File. This is simply a file designed to make it easier to compile and run the code provided, without a need for always knowing the order of files and their dependecies. \\
+
+The best way to explain what this file does is through the help command. Essentially, just type ``make \_\_\_\_'', where the black is filled with a listed command, to do whatever you need with the provided code. The commands are below:
+\begin{lstlisting}
+ ----------------HELP MENU---------------
+ TERM - MEANING
+ Net - Just Network,
+ DNet - Simulation [Dynamic Network]
+ 
+ TASK - COMMAND
+ Compile and Run - NetTestFull and
+                   DNetTestFull
+ Compile - NetTest and DNetTest
+ Run - NetTestRun and DNetTestRun
+ Remove Files - clean
+\end{lstlisting}
+
+\end{multicols*}
 \end{document}
 %%% Local Variables:
 %%% mode: latex

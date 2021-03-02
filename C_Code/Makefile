@@ -46,7 +46,11 @@ clean:
 .PHONY: help
 help: 
 	@echo ' ----------------HELP MENU---------------'
-	@echo ' Terms: Net - Just Network, DNet - Simulation [Dynamic Network]'
+	@echo ' TERMS'
+	@echo ' Net - Just Network'
+	@echo ' DNet - Simulation [Dynamic Network]'
+	@echo ' '
+	@echo ' COMMANDS'
 	@echo ' Compile and Run - NetTestFull and DNetTestFull'
 	@echo ' Compile - NetTest and DNetTest'
 	@echo ' Run - NetTestRun and DNetTestRun'
