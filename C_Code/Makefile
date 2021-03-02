@@ -1,0 +1,53 @@
+# Set deault to the help menu
+.DEFAULT_GOAL := help
+
+# Compile with gcc, change this to clang if you prefer
+COMPILER = gcc
+
+# The C flags to pass to gcc
+C_FLAGS = -Wall -Wextra -g
+
+# Ending to ensure that <math> and the for loops work
+END = -lm -std=c99
+
+#Targets for cleaning
+TARGETS = NetTest DNetTest test.txt DNet.txt
+
+#Rule to fix .o file creation
+%.o:%.c
+	gcc $(CFLAGS) $< -o $@
+
+# Written commands to call for full tests
+NetTestFull: NetTest NetTestRun
+
+DNetTestFull: DNetTest DNetTestRun
+
+#Run the compiled files
+NetTestRun:
+	./NetTest 
+	
+DNetTestRun:
+	./DNetTest 
+	
+# Compile network test
+NetTest: .FORCE
+	$(COMPILER) $(C_FLAGS) -o NetTest NetworkTest.c NetworkGen.c $(END)
+	
+# Compile code simulation
+DNetTest: .FORCE
+	$(COMPILER) $(C_FLAGS) -o DNetTest DNetTest.c DNet.c NetworkGen.c $(END)
+	
+.FORCE:
+	
+#Remove extra files
+clean:
+	rm -f $(TARGETS) *.o
+
+.PHONY: help
+help: 
+	@echo ' ----------------HELP MENU---------------'
+	@echo ' Terms: Net - Just Network, DNet - Simulation [Dynamic Network]'
+	@echo ' Compile and Run - NetTestFull and DNetTestFull'
+	@echo ' Compile - NetTest and DNetTest'
+	@echo ' Run - NetTestRun and DNetTestRun'
+	@echo ' Remove Files - clean'
