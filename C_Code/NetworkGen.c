@@ -12,6 +12,7 @@ pPerson mallocPerson() {
     return pThis;
   }
 
+  pThis->number = 0;
   pThis->age = 0;
   pThis->cCount = 0;
   pThis->status = 0;
@@ -25,12 +26,14 @@ pPerson mallocPerson() {
 }
 
 void copyPerson(pPerson dest, pPerson src) {
+  dest->number = src->number;
   dest->age = src->age;
   dest->cCount = src->cCount;
   dest->status = src->status;
   dest->counter = src->counter;
   for(int i = 0; i < src->cCount; i++) {
     dest->connections[i] = src->connections[i];
+    dest->con_type[i] = src->con_type[i];
   }
 }
 
@@ -39,6 +42,7 @@ pPerson* mallocNetwork(int size) {
   pPerson *network = malloc(sizeof(pPerson)*size);
   for(int i = 0; i < size; i++) {
     network[i] = mallocPerson();
+    network[i]->number = i;
   }
 
   return(network);
@@ -121,7 +125,7 @@ void printNetwork(pPerson* network, int size, String file) {
     }
   }
   for(int i = 0; i < size; i++) {
-    fprintf(fPtr, "Person %d: ", i+1);
+    fprintf(fPtr, "Person %d: ", network[i]->number+1);
     fprintPerson(network[i], fPtr);
     fprintf(fPtr, "\n");
   }

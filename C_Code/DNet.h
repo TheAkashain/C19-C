@@ -3,7 +3,7 @@
 #include <math.h>
 #include "NetworkGen.h"
 
-void simulate(pPerson* orig, int size, int runs, String file, double data[]);
+void simulate(pPerson* orig, int size, int runs, String file, double data[], int verbose);
 
 void day(pPerson* network, int size, double data[]);
 
@@ -11,7 +11,9 @@ void infect(pPerson person, double beta, double rate, int* final);
 
 void test(pPerson person, double beta, int* final);
 
-void fPrintNetworkStatus(pPerson* network, int size, FILE* fPtr);
+void fPrintNetworkStatus(pPerson* network, int size, FILE* fPtr, int run);
+
+void event(pPerson* network, int size, int amount, double beta);
 
 /*
   List of Disease Statuses:
@@ -50,21 +52,25 @@ void fPrintNetworkStatus(pPerson* network, int size, FILE* fPtr);
    7 - Random Test Chance
    8 - Test Success Chance
    9 - Pre-symp Time (Days)
-   10 - Border Crossings Per Day
-   11 - Importation Infection Chance
-   12 - Starting Phase (0 = yellow, 1 = orange, 2 = red)
-   13 - Orange Case Threshold
-   14 - Red Case Threshold 
-   15 - Travel Isolation Time (0 = full house, 1 = just travel, 2 = none)
-   16 - Average Travel Time
+   10 - Average number of days between events 
+   ----BELOW NOT YET IMPLEMENTED----
+   11 - Border Crossings Per Day
+   12 - Importation Infection Chance
+   13 - Starting Phase (0 = yellow, 1 = orange, 2 = red)
+   14 - Orange Case Threshold
+   15 - Red Case Threshold 
+   16 - Travel Isolation Time (0 = full house, 1 = just travel, 2 = none)
+   17 - Average Travel Time
 */
 
 /*
   typedef struct person {
+  int number;
   int age;
   int cCount;
   int status;
   int counter;
   int connections[MAX_C];
+  int con_type[MAX_C];
 } Person, *pPerson;
 */

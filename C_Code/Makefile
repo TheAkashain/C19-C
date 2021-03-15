@@ -20,14 +20,14 @@ TARGETS = NetTest DNetTest test.txt DNet.txt
 # Written commands to call for full tests
 NetTestFull: NetTest NetTestRun
 
-DNetTestFull: DNetTest DNetTestRun
+DNetTestFull: DNetTest DNetTestRun 
 
 #Run the compiled files
 NetTestRun:
-	./NetTest 
+	./NetTest $(FILE)
 	
 DNetTestRun:
-	./DNetTest 
+	./DNetTest $(FILE)
 	
 # Compile network test
 NetTest: .FORCE
@@ -45,7 +45,7 @@ clean:
 
 .PHONY: help
 help: 
-	@echo ' ----------------HELP MENU---------------'
+	@echo ' ---------------------HELP MENU--------------------'
 	@echo ' TERM - MEANING'
 	@echo ' Net - Just Network'
 	@echo ' DNet - Simulation [Dynamic Network]'
@@ -55,3 +55,5 @@ help:
 	@echo ' Compile - NetTest and DNetTest'
 	@echo ' Run - NetTestRun and DNetTestRun'
 	@echo ' Remove Files - clean'
+	@echo ' '
+	@echo ' To input file, type FILE="filename" at end '

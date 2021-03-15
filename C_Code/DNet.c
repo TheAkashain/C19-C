@@ -3,10 +3,14 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "DNet.h"
 
 int TI;
 int STATE;
+FILE* vPtr;
+int verbose;
+int edit;
 
 /*
   List of Disease Statuses:
@@ -20,8 +24,12 @@ int STATE;
   7 - Tested Removed
 */
 
-void simulate(pPerson* orig, int size, int runs, String file, double data[]) {
+void simulate(pPerson* orig, int size, int runs, String file, double data[], int ver) {
   srand(time(NULL));
+  if(ver == 1){
+    verbose = 1;
+  }
+  
   /* DATA ORDER - HIGHLY IMPORTANT
      0 - Days
      1 - Beta (Infection Chance)
@@ -33,14 +41,16 @@ void simulate(pPerson* orig, int size, int runs, String file, double data[]) {
      7 - Random Test Chance
      8 - Test Success Chance
      9 - Pre-symp Time (Days)
-     10 - Border Crossings Per Day
-     11 - Importation Infection Chance
-     12 - Starting Phase (0 = yellow, 1 = orange, 2 = red)
-     13 - Orange Case Threshold
-     14 - Red Case Threshold 
-     15 - Travel Isolation Time (0 = full house, 1 = just travel, 2 = non)
-     16 - Average Travel Time
-   */
+     10 - Average number of days between events 
+     ----BELOW NOT YET IMPLEMENTED----
+     11 - Border Crossings Per Day
+     12 - Importation Infection Chance
+     13 - Starting Phase (0 = yellow, 1 = orange, 2 = red)
+     14 - Orange Case Threshold
+     15 - Red Case Threshold 
+     16 - Travel Isolation Time (0 = full house, 1 = just travel, 2 = none)
+     17 - Average Travel Time
+  */
 
   //Open file by provided name
   int compare = strcmp(file, "stdout");
@@ -60,6 +70,7 @@ void simulate(pPerson* orig, int size, int runs, String file, double data[]) {
 
   //Loop through the total number of executions
   for(int i = 0; i < runs; i++) {
+    edit = 0;
 
     //Copy the network
     pPerson* testwork = createCopy(orig, size);
@@ -79,14 +90,39 @@ void simulate(pPerson* orig, int size, int runs, String file, double data[]) {
     fflush(stdout);
 
     //Pick the index of a random person to be infected and set infected to 1
-    int randval = rand() % 20000;
+    int randval = rand() % size;
     testwork[randval]->status = 4;
     TI = 1;
     STATE = 0;
 
+    //If verbose, save data
+    char buffer[100];
+    if(verbose == 1) {
+      snprintf(buffer, sizeof(buffer), "Simulation_Results/Run_%d.txt", i+1);
+      vPtr = fopen(buffer, "w");
+      if(fPtr==NULL) {
+	printf("Failed to open file.\n");
+	return;
+      }
+    }
     //Loop through the days
     for(int j = 0; j < days; j++) {
+      if(verbose == 1) {
+	fprintf(vPtr, "%d,", j+1);
+      }
+      
+      //The day
       day(testwork, size, data);
+
+      //Check if a super-spreading event happens
+      double eCheck = rand() / ((double) RAND_MAX);
+      if((eCheck < 1/data[10]) & (STATE == 0)) {
+	//Placeholder average of 50 people with SD of 10 per event
+	int amount = round(normalRandom()*10+50);
+	event(testwork, size, amount, data[1]);
+      }
+
+      //Update the emergency phase
       if(TI > 80) {
 	STATE = 2;
       }
@@ -96,10 +132,19 @@ void simulate(pPerson* orig, int size, int runs, String file, double data[]) {
       else {
 	STATE = 0;
       }
+      fprintf(vPtr, "\n");
+    }
+
+    //Close verbose file
+    if(verbose == 1){
+      fclose(vPtr);
+    }
+    if(edit == 0) {
+      remove(buffer);
     }
 
     //Save and delete the network
-    fPrintNetworkStatus(testwork, size, fPtr);
+    fPrintNetworkStatus(testwork, size, fPtr, i+1);
     freeNetwork(testwork, size);
   }
 
@@ -220,7 +265,7 @@ void day(pPerson* network, int size, double data[]) {
   }
 }
 
-void infect(pPerson person, double beta, double rate, int* final) {  
+void infect(pPerson person, double beta, double rate, int* final) {
   double lrate = 1;
   if(person->status == 3) {
     lrate = rate;
@@ -231,12 +276,29 @@ void infect(pPerson person, double beta, double rate, int* final) {
     randsL[i] = rand() / ((double) RAND_MAX);
   }
 
+  int listed = 0;
+
   //Infections for YELLOW
   if(STATE == 0) {
     //Loop through the connections
     for(int i = 0; i < person->cCount; i++) {
       //Conditions of if person is suscetible, if the random works, and if the connection type if valid (NA for Y)
       if((final[person->connections[i]] == 0) & (randsL[i] < (beta*lrate))) {
+	
+	//If verbose, print out the index of who was infected
+	if(edit == 0) {
+	  edit = 1;
+	}
+	
+	if((listed == 0) & (verbose == 1)) {
+	  fprintf(vPtr, "%d,", (person->number));
+	  listed = 1;
+	}
+	if (verbose == 1) {
+	  fprintf(vPtr, "%d,%d,", person->connections[i],person->con_type[i]);
+	}
+
+	//Actually infect the person
 	final[person->connections[i]] = 1;
       }
     }
@@ -246,6 +308,20 @@ void infect(pPerson person, double beta, double rate, int* final) {
   else if(STATE == 1) {
     for(int i = 0; i < person->cCount; i++) {
       if((final[person->connections[i]] == 0) & (randsL[i] < (beta*lrate)) & (person->con_type[i] != 2)) {
+	//If verbose, print out the index of who was infected
+	if(edit == 0) {
+	  edit = 1;
+	}
+	
+	if((listed == 0) & (verbose == 1)) {
+	  fprintf(vPtr, "%d,", person->number);
+	  listed = 1;
+	}
+	if (verbose == 1) {
+	  fprintf(vPtr, "%d,%d,", person->connections[i],person->con_type[i]);
+	}
+
+	//Actually infect the person
 	final[person->connections[i]] = 1;
       }
     }
@@ -255,9 +331,27 @@ void infect(pPerson person, double beta, double rate, int* final) {
   else if(STATE == 2) {
     for(int i = 0; i < person->cCount; i++) {
       if((final[person->connections[i]] == 0) & (randsL[i] < (beta*lrate)) & (person->con_type[i] == 2)) {
+	//If verbose, print out the index of who was infected
+	if(edit == 0) {
+	  edit = 1;
+	}
+	
+	if((listed == 0) & (verbose == 1)) {
+	  fprintf(vPtr, "%d,", person->number);
+	  listed = 1;
+	}
+	if (verbose == 1) {
+	  fprintf(vPtr, "%d,%d,", person->connections[i],person->con_type[i]);
+	}
+
+	//Actually infect the person
 	final[person->connections[i]] = 1;
       }
     }
+  }
+
+  if(listed == 1) {
+    fprintf(vPtr, "\n");
   }
 }
 
@@ -273,13 +367,61 @@ void test(pPerson person, double test, int* final) {
   }
 }
 
-void fPrintNetworkStatus(pPerson* network, int size, FILE* fPtr) {
+void event(pPerson* network, int size, int amount, double beta) {
+  int randsL[amount];
+  for(int i = 0; i < amount; i++) {
+    randsL[i] = (double)rand() / (double)size;
+  }
+
+  int listed = 0;
+
+  //Check if someone is infected
+  for (int i = 0; i < amount; i++) {
+    int check = network[randsL[i]]->status;
+
+    //If infected, see if infects others at event
+    if((check == 1) | (check == 2) | (check == 3)) {
+      double randsI[amount];
+      
+      //Set up randoms
+      for(int k = 0; k < amount; k++) {
+	randsI[k] = rand() / ((double) RAND_MAX);
+      }
+
+      //Infect people
+      for(int j = 0; j < amount; j++) {
+	if((j != i) & (network[randsL[j]]->status == 0)) {
+	  if(randsI[j] < beta) {
+	    if(edit == 0) {
+	      edit = 1;
+	    }
+	    
+	    if((listed == 0) & (verbose == 1)) {
+	      fprintf(vPtr, "%d,", network[randsL[i]]->number);
+	      listed = 1;
+	    }
+	    
+	    if (verbose == 1) {
+	      fprintf(vPtr, "%d,%d,", network[randsL[j]]->number, 3);
+	    }
+	    network[randsL[j]]->status = 1;
+	  }
+	}
+      }
+    }
+  }
+  if(listed == 1) {
+    fprintf(vPtr, "\n");
+  }
+}
+
+void fPrintNetworkStatus(pPerson* network, int size, FILE* fPtr, int run) {
   int status_count[8] = {0};
   for(int i = 0; i < size; i++) {
     status_count[network[i]->status] += 1;
   }
   if(status_count[0] < size-1) {
-    fprintf(fPtr, "%d, %d, %d, %d, %d, %d, %d, %d, %d\n", status_count[0], status_count[1],
+    fprintf(fPtr, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", run, status_count[0], status_count[1],
 	    status_count[2], status_count[3], status_count[4], status_count[5],
 	    status_count[6], status_count[7], size - status_count[0]);
   }

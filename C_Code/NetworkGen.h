@@ -6,6 +6,7 @@
 typedef char* String;
 
 typedef struct person {
+  int number;
   int age;
   int cCount;
   int status;
